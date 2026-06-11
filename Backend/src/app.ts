@@ -16,18 +16,30 @@ import branchRoutes from "./routes/branch.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import reorderRoutes from "./routes/reorder.routes.js";
 import { errorHandler } from "./middleware/error.middleware.js";
+import path from "path";
+
 const app = express();
+app.set("trust proxy", 1);
 
 // =====================================
 // MIDDLEWARE
 // =====================================
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true
-  })
-);
+const allowedOrigins: string[] = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL ?? ""
+].filter((origin): origin is string => Boolean(origin));
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    console.log("Blocked CORS origin:", origin);
+    return callback(null, false);
+  },
+  credentials: true
+}));
 
 app.use(express.json());
 
@@ -44,6 +56,10 @@ app.get("/", (_req, res) => {
   });
 });
 
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "uploads"))
+);
 // =====================================
 // API ROUTES
 // =====================================
@@ -84,5 +100,7 @@ app.use((req, res) => {
     message: `Route not found: ${req.originalUrl}`
   });
 });
+
 app.use(errorHandler);
+
 export default app;

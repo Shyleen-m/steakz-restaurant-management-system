@@ -7,13 +7,252 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id              String           @id @default(uuid())
+  fullName        String
+  email           String           @unique
+  password        String
+  role            Role
+  /// *
+  ///    * STAFF USERS BELONG TO BRANCHES
+  ///    * CUSTOMERS HAVE NULL
+  branchId        Int?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  isActive        Boolean          @default(true)
+  inventoryLogs   InventoryLog[]
+  customerOrders  Order[]          @relation("CustomerOrders")
+  staffOrders     Order[]          @relation("StaffOrders")
+  reorderRequests ReorderRequest[]
+  reservations    Reservation[]    @relation("CustomerReservations")
+  branch          Branch?          @relation(fields: [branchId], references: [id])
+
+  @@index([branchId])
+}
+
+model Branch {
+  id              Int               @id @default(autoincrement())
+  name            String
+  city            String
+  address         String
+  phone           String
+  openingHours    String
+  image           String?
+  description     String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  inventory       Inventory[]
+  menus           MenuItem[]
+  orders          Order[]
+  payments        Payment[]
+  receipts        Receipt[]
+  reorderRequests ReorderRequest[]
+  reservations    Reservation[]
+  tables          RestaurantTable[]
+  users           User[]
+}
+
+model MenuItem {
+  id          String               @id @default(uuid())
+  name        String
+  description String?
+  image       String?
+  category    String
+  price       Float
+  available   Boolean              @default(true)
+  branchId    Int?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  branch      Branch?              @relation(fields: [branchId], references: [id])
+  ingredients MenuItemIngredient[]
+  orderItems  OrderItem[]
+}
+
+model MenuItemIngredient {
+  id             String    @id @default(uuid())
+  menuItemId     String
+  inventoryId    String
+  quantityNeeded Float
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  inventory      Inventory @relation(fields: [inventoryId], references: [id])
+  menuItem       MenuItem  @relation(fields: [menuItemId], references: [id])
+
+  @@index([menuItemId])
+  @@index([inventoryId])
+}
+
+model RestaurantTable {
+  id          String   @id @default(uuid())
+  tableNumber Int
+  seats       Int
+  branchId    Int
+  createdAt   DateTime @default(now())
+  orders      Order[]
+  branch      Branch   @relation(fields: [branchId], references: [id])
+
+  @@index([branchId])
+}
+
+model Order {
+  id          String           @id @default(uuid())
+  tableNumber Int
+  total       Float
+  status      OrderStatus      @default(PENDING_PAYMENT)
+  /// *
+  ///    * BRANCH
+  branchId    Int
+  tableId     String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  /// *
+  ///    * CUSTOMER
+  customerId  String?
+  guestCount  Int              @default(1)
+  orderType   OrderType        @default(DINE_IN)
+  /// *
+  ///    * STAFF MEMBER
+  ///    * (CHEF / WAITER)
+  staffId     String?
+  branch      Branch           @relation(fields: [branchId], references: [id])
+  customer    User?            @relation("CustomerOrders", fields: [customerId], references: [id])
+  staff       User?            @relation("StaffOrders", fields: [staffId], references: [id])
+  table       RestaurantTable? @relation(fields: [tableId], references: [id])
+  items       OrderItem[]
+  payment     Payment?
+  receipt     Receipt?
+
+  @@index([branchId])
+  @@index([staffId])
+  @@index([customerId])
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  quantity   Int
+  price      Float
+  orderId    String
+  menuItemId String
+  createdAt  DateTime @default(now())
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  order      Order    @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  amount        Float
+  paymentMethod PaymentMethod
+  orderId       String        @unique
+  branchId      Int
+  createdAt     DateTime      @default(now())
+  status        PaymentStatus @default(PENDING)
+  branch        Branch        @relation(fields: [branchId], references: [id])
+  order         Order         @relation(fields: [orderId], references: [id])
+
+  @@index([branchId])
+}
+
+model Receipt {
+  id            String        @id @default(uuid())
+  receiptNo     String        @unique
+  subtotal      Float
+  taxAmount     Float
+  serviceCharge Float
+  total         Float
+  paymentMethod PaymentMethod
+  orderId       String        @unique
+  branchId      Int
+  createdAt     DateTime      @default(now())
+  branch        Branch        @relation(fields: [branchId], references: [id])
+  order         Order         @relation(fields: [orderId], references: [id])
+
+  @@index([branchId])
+}
+
+model Reservation {
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  guests          Int
+  status          ReservationStatus @default(PENDING)
+  branchId        Int
+  createdAt       DateTime          @default(now())
+  /// *
+  ///    * OPTIONAL CUSTOMER ACCOUNT
+  customerId      String?
+  reservationTime DateTime
+  specialRequests String?
+  updatedAt       DateTime          @updatedAt
+  tableNumber     Int?
+  id              Int               @id @default(autoincrement())
+  branch          Branch            @relation(fields: [branchId], references: [id])
+  customer        User?             @relation("CustomerReservations", fields: [customerId], references: [id])
+
+  @@index([branchId])
+  @@index([customerId])
+}
+
+model Inventory {
+  id                  String               @id @default(uuid())
+  quantity            Float
+  unit                String
+  branchId            Int
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  criticalLevel       Float                @default(0)
+  minimumLevel        Float
+  name                String
+  branch              Branch               @relation(fields: [branchId], references: [id])
+  logs                InventoryLog[]
+  menuItemIngredients MenuItemIngredient[]
+  reorderRequests     ReorderRequest[]
+
+  @@index([branchId])
+}
+
+model InventoryLog {
+  id               String             @id @default(uuid())
+  inventoryId      String
+  previousQuantity Float
+  newQuantity      Float
+  note             String?
+  createdAt        DateTime           @default(now())
+  action           InventoryLogAction @default(ADJUSTMENT)
+  changedById      String?
+  changedBy        User?              @relation(fields: [changedById], references: [id])
+  inventory        Inventory          @relation(fields: [inventoryId], references: [id])
+
+  @@index([inventoryId])
+}
+
+model ReorderRequest {
+  id            String               @id @default(uuid())
+  inventoryId   String
+  branchId      Int
+  requestedById String
+  quantity      Float
+  note          String?
+  status        ReorderRequestStatus @default(PENDING)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  branch        Branch               @relation(fields: [branchId], references: [id])
+  inventory     Inventory            @relation(fields: [inventoryId], references: [id])
+  requestedBy   User                 @relation(fields: [requestedById], references: [id])
+
+  @@index([inventoryId])
+  @@index([branchId])
+  @@index([requestedById])
+}
+
 enum Role {
   HEADQUARTERS_MANAGER
   BRANCH_MANAGER
   ADMIN
+  WAITER
   INVENTORY_MANAGER
   KITCHEN_STAFF
-  WAITER
   CUSTOMER
 }
 
@@ -47,9 +286,9 @@ enum PaymentStatus {
 enum ReservationStatus {
   PENDING
   CONFIRMED
-  SEATED
-  COMPLETED
   CANCELLED
+  COMPLETED
+  SEATED
   NO_SHOW
 }
 
@@ -65,362 +304,4 @@ enum ReorderRequestStatus {
   APPROVED
   REJECTED
   FULFILLED
-}
-
-model User {
-  id String @id @default(uuid())
-
-  fullName String
-  email    String @unique
-  password String
-
-  role Role
-
-  isActive Boolean @default(true)
-
-  /**
-   * STAFF USERS BELONG TO BRANCHES
-   * CUSTOMERS HAVE NULL
-   */
-  branchId Int?
-  branch   Branch? @relation(fields: [branchId], references: [id])
-
-  /**
-   * STAFF ORDERS
-   * (CHEF / WAITER)
-   */
-  staffOrders Order[] @relation("StaffOrders")
-
-  /**
-   * CUSTOMER ORDERS
-   */
-  customerOrders Order[] @relation("CustomerOrders")
-
-  /**
-   * CUSTOMER RESERVATIONS
-   */
-  reservations Reservation[] @relation("CustomerReservations")
-
-  inventoryLogs InventoryLog[]
-
-  reorderRequests ReorderRequest[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([branchId])
-}
-
-model Branch {
-  id Int @id @default(autoincrement())
-
-  name         String
-  city         String
-  address      String
-  phone        String
-  openingHours String
-
-  image       String?
-  description String?
-
-  users User[]
-
-  menus MenuItem[]
-
-  orders Order[]
-
-  receipts Receipt[]
-
-  reservations Reservation[]
-
-  inventory Inventory[]
-
-  tables RestaurantTable[]
-
-  payments Payment[]
-
-  reorderRequests ReorderRequest[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model MenuItem {
-  id String @id @default(uuid())
-
-  name        String
-  description String?
-
-  category String
-
-  price Float
-
-  image String?
-
-  available Boolean @default(true)
-
-  branchId Int?
-  branch   Branch? @relation(fields: [branchId], references: [id])
-
-  orderItems OrderItem[]
-
-  ingredients MenuItemIngredient[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model MenuItemIngredient {
-  id String @id @default(uuid())
-
-  menuItemId String
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
-
-  inventoryId String
-  inventory   Inventory @relation(fields: [inventoryId], references: [id])
-
-  quantityNeeded Float
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([menuItemId])
-  @@index([inventoryId])
-}
-
-model RestaurantTable {
-  id String @id @default(uuid())
-
-  tableNumber Int
-
-  seats Int
-
-  branchId Int
-  branch   Branch @relation(fields: [branchId], references: [id])
-
-  orders Order[]
-
-  createdAt DateTime @default(now())
-
-  @@index([branchId])
-}
-
-model Order {
-  id String @id @default(uuid())
-
-  tableNumber Int
-
-  total Float
-
-  status OrderStatus @default(PENDING_PAYMENT)
-
-  orderType OrderType @default(DINE_IN)
-
-  guestCount Int @default(1)
-
-  /**
-   * BRANCH
-   */
-  branchId Int
-  branch   Branch @relation(fields: [branchId], references: [id])
-
-  /**
-   * CUSTOMER
-   */
-  customerId String?
-  customer   User?   @relation("CustomerOrders", fields: [customerId], references: [id])
-
-  /**
-   * STAFF MEMBER
-   * (CHEF / WAITER)
-   */
-  staffId String?
-  staff   User?   @relation("StaffOrders", fields: [staffId], references: [id])
-
-  tableId String?
-  table   RestaurantTable? @relation(fields: [tableId], references: [id])
-
-  payment Payment?
-
-  receipt Receipt?
-
-  items OrderItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([branchId])
-  @@index([staffId])
-  @@index([customerId])
-}
-
-model OrderItem {
-  id String @id @default(uuid())
-
-  quantity Int
-
-  price Float
-
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id])
-
-  menuItemId String
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@index([orderId])
-}
-
-model Payment {
-  id String @id @default(uuid())
-
-  amount Float
-
-  paymentMethod PaymentMethod
-
-  status PaymentStatus @default(PENDING)
-
-  orderId String @unique
-  order   Order  @relation(fields: [orderId], references: [id])
-
-  branchId Int
-  branch   Branch @relation(fields: [branchId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@index([branchId])
-}
-
-model Receipt {
-  id String @id @default(uuid())
-
-  receiptNo String @unique
-
-  subtotal      Float
-  taxAmount     Float
-  serviceCharge Float
-  total         Float
-
-  paymentMethod PaymentMethod
-
-  orderId String @unique
-  order   Order  @relation(fields: [orderId], references: [id])
-
-  branchId Int
-  branch   Branch @relation(fields: [branchId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@index([branchId])
-}
-
-model Reservation {
-  id Int @id @default(autoincrement())
-
-  customerName String
-
-  customerEmail String
-
-  customerPhone String
-
-  guests Int
-
-  reservationTime DateTime
-
-  specialRequests String?
-
-  status ReservationStatus @default(PENDING)
-
-  tableNumber Int?
-
-  branchId Int
-  branch   Branch @relation(fields: [branchId], references: [id])
-
-  /**
-   * OPTIONAL CUSTOMER ACCOUNT
-   */
-  customerId String?
-  customer   User?   @relation("CustomerReservations", fields: [customerId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([branchId])
-  @@index([customerId])
-}
-
-model Inventory {
-  id String @id @default(uuid())
-
-  name String
-
-  quantity Float
-
-  unit String
-
-  minimumLevel Float
-
-  criticalLevel Float @default(0)
-
-  branchId Int
-  branch   Branch @relation(fields: [branchId], references: [id])
-
-  logs InventoryLog[]
-
-  menuItemIngredients MenuItemIngredient[]
-
-  reorderRequests ReorderRequest[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([branchId])
-}
-
-model InventoryLog {
-  id String @id @default(uuid())
-
-  inventoryId String
-  inventory   Inventory @relation(fields: [inventoryId], references: [id])
-
-  action InventoryLogAction @default(ADJUSTMENT)
-
-  previousQuantity Float
-  newQuantity      Float
-
-  changedById String?
-  changedBy   User?   @relation(fields: [changedById], references: [id])
-
-  note String?
-
-  createdAt DateTime @default(now())
-
-  @@index([inventoryId])
-}
-
-model ReorderRequest {
-  id String @id @default(uuid())
-
-  inventoryId String
-  inventory   Inventory @relation(fields: [inventoryId], references: [id])
-
-  branchId Int
-  branch   Branch @relation(fields: [branchId], references: [id])
-
-  requestedById String
-  requestedBy   User   @relation(fields: [requestedById], references: [id])
-
-  quantity Float
-
-  note String?
-
-  status ReorderRequestStatus @default(PENDING)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([inventoryId])
-  @@index([branchId])
-  @@index([requestedById])
 }
