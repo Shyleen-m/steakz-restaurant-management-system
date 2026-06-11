@@ -316,7 +316,11 @@ const WaiterDashboard = () => {
               <div
                 key={reservation.id}
                 className='card bg-[#0B0B0B] border-blue-500/20 p-5 flex items-center justify-between gap-4 cursor-pointer hover:border-blue-500/40 transition-all'
-                onClick={() => navigate('/dashboard/reservations')}
+                onClick={() =>
+                  navigate(
+                    `/dashboard/orders/create?table=${reservation.tableNumber}`
+                  )
+                }
               >
                 <div className='flex items-center gap-4 min-w-0'>
                   <div className='w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0'>

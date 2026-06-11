@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import { socket } from '../../socket';
+import {useSearchParams} from "react-router-dom";
 
 import {
   ShoppingBag,
@@ -26,8 +27,13 @@ const CreateOrderPage = () => {
   const [selectedItems, setSelectedItems] =
     useState<any[]>([]);
 
-  const [tableNumber, setTableNumber] =
-    useState(1);
+  const [searchParams] = useSearchParams();
+
+const reservationTable =
+  Number(searchParams.get('table')) || 1;
+
+const [tableNumber, setTableNumber] =
+  useState(reservationTable);
 
   const { user } = useAuth();
 
@@ -202,24 +208,15 @@ const CreateOrderPage = () => {
 
         setSubmitting(true);
 
-        await api.post(
-          '/orders',
-          {
-            branchId: user?.branchId,
-            tableNumber: Number(tableNumber),
-
-            items:
-              selectedItems.map(
-                item => ({
-                  menuItemId:
-                    item.id,
-
-                  quantity:
-                    item.quantity
-                })
-              )
-          }
-        );
+        await api.post('/orders', {
+  branchId: user?.branchId,
+  tableNumber: Number(tableNumber),
+  status: 'PENDING_PAYMENT',
+  items: selectedItems.map(item => ({
+    menuItemId: item.id,
+    quantity: item.quantity
+  }))
+});
 
         alert(
           'Order transmitted successfully'
