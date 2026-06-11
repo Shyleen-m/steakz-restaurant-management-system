@@ -623,14 +623,12 @@ export const getDashboardStats = async (
       "INVENTORY_MANAGER"
     ) {
 
-      const inventory =
-        await prisma.inventory.findMany({
-          include: {
-            supplier: true,
-            branch: true
-          }
-        });
-
+const inventory =
+  await prisma.inventory.findMany({
+    include: {
+      branch: true
+    }
+  });
       return res.status(200).json({
 
         dashboardType:

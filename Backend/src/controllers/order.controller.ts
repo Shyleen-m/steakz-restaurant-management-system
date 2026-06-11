@@ -115,7 +115,7 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
       const updatedAt = new Date(order.updatedAt);
       
       let waitDuration = 0;
-      let totalPrepTime = null;
+      let totalPrepTime: number | null = null;
 
       if (["PENDING_PAYMENT", "PAID", "PREPARING", "READY"].includes(order.status)) {
         waitDuration = Math.floor((now.getTime() - createdAt.getTime()) / 1000); // seconds
@@ -148,7 +148,9 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
 export const getSingleOrder = async (req: AuthRequest, res: Response) => {
   try {
     const order = await prisma.order.findUnique({
-      where: { id: req.params.id },
+      where: {
+  id: String(req.params.id)
+},
       include: {
         customer: true,
         staff: true,
@@ -174,7 +176,7 @@ export const getSingleOrder = async (req: AuthRequest, res: Response) => {
     const updatedAt = new Date(order.updatedAt);
     
     let waitDuration = 0;
-    let totalPrepTime = null;
+    let totalPrepTime: number | null = null;
 
     if (["PENDING_PAYMENT", "PAID", "PREPARING", "READY"].includes(order.status)) {
       waitDuration = Math.floor((now.getTime() - createdAt.getTime()) / 1000);
@@ -207,7 +209,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const { status } = req.body;
 
     const order = await prisma.order.findUnique({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       include: {
         items: {
           include: {
@@ -246,7 +248,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     }
 
     const updated = await prisma.order.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: { status },
       include: {
         customer: true,
@@ -315,29 +317,66 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
 /**
  * DELETE ORDER
  */
-export const deleteOrder = async (req: AuthRequest, res: Response) => {
-  try {
-    const id = req.params.id;
+export const deleteOrder = async (
+req: AuthRequest,
+res: Response
+) => {
+try {
+const id = String(req.params.id);
 
-    const order = await prisma.order.findUnique({ where: { id } });
-    if (!order) return res.status(404).json({ message: "Order not found" });
+const order = await prisma.order.findUnique({
+  where: { id }
+});
 
-    if (!canAccessBranch(req.user, order.branchId)) {
-      return res.status(403).json({ message: "Access denied" });
-    }
+if (!order) {
+  return res.status(404).json({
+    message: "Order not found"
+  });
+}
 
-    await prisma.orderItem.deleteMany({ where: { orderId: id } });
-    await prisma.order.delete({ where: { id } });
+if (!canAccessBranch(req.user, order.branchId)) {
+  return res.status(403).json({
+    message: "Access denied"
+  });
+}
 
-    console.log(`[Socket] Emitting order:deleted to branch_${order.branchId}`);
-    io.to(`branch_${order.branchId}`).to("global_analytics").emit("order:deleted", id);
-
-    return res.json({ message: "Order deleted successfully" });
-  } catch (error) {
-    console.error("DELETE ORDER ERROR:", error);
-    return res.status(500).json({ message: "Failed to delete order" });
+await prisma.orderItem.deleteMany({
+  where: {
+    orderId: id
   }
+});
+
+await prisma.order.delete({
+  where: {
+    id
+  }
+});
+
+console.log(
+  `[Socket] Emitting order:deleted to branch_${order.branchId}`
+);
+
+io.to(`branch_${order.branchId}`)
+  .to("global_analytics")
+  .emit("order:deleted", id);
+
+return res.json({
+  message: "Order deleted successfully"
+});
+
+} catch (error) {
+console.error(
+"DELETE ORDER ERROR:",
+error
+);
+
+return res.status(500).json({
+  message: "Failed to delete order"
+});
+
+}
 };
+
 
 /**
  * EXPORT ORDERS (CSV)

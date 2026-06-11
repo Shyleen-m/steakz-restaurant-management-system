@@ -95,7 +95,7 @@ export const updateMenuItem = async (
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
 
     const updatedMenuItem =
       await prisma.menuItem.update({
@@ -133,7 +133,7 @@ export const deleteMenuItem = async (
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
 
     await prisma.menuItem.delete({
       where: {

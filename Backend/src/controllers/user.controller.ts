@@ -65,7 +65,7 @@ export const updateUser = async (
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
 
     const {
       fullName,
@@ -121,7 +121,7 @@ export const deactivateUser = async (
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
 
     const existingUser = await prisma.user.findUnique({
       where: { id }
@@ -161,7 +161,7 @@ export const activateUser = async (
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
 
     const existingUser = await prisma.user.findUnique({
       where: { id }
@@ -202,7 +202,7 @@ export const deleteUser = async (
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
 
     const existingUser = await prisma.user.findUnique({
       where: { id }

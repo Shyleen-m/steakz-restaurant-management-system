@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
 import { Role } from "@prisma/client";
-import { AuthRequest } from "./auth.middleware";
+import { AuthRequest } from "./auth.middleware.js";
 
 /**
  * ✅ UNIFIED ROLE AUTHORIZATION

@@ -155,12 +155,12 @@ export const updateReorderStatus = async (
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
 
     const { status } = req.body;
 
-    const existingRequest =
-      await prisma.reorderRequest.findUnique({
+    const existingRequest: any =
+  await prisma.reorderRequest.findUnique({
         where: {
           id
         },
@@ -292,10 +292,10 @@ export const deleteReorderRequest = async (
   res: Response
 ) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
 
-    const existingRequest =
-      await prisma.reorderRequest.findUnique({
+      const existingRequest: any =
+  await prisma.reorderRequest.findUnique({
         where: {
           id
         }
