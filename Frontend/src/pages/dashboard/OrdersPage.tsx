@@ -144,7 +144,7 @@ const OrdersPage = () => {
 
   // Can only create order if no active order exists for this table yet
   const tableHasActiveOrder = filteredOrders.some(o =>
-    ['pending_payment', 'paid', 'preparing', 'ready', 'served'].includes(normalizeStatus(o.status))
+    ['pending_payment', 'paid', 'preparing', 'ready'].includes(normalizeStatus(o.status))
   );
 
   if (loading) {
