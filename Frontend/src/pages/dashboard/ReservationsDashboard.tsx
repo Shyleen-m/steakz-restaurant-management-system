@@ -603,10 +603,10 @@ const ReservationsDashboard = () => {
 
                       <button
                         onClick={() =>
-                          navigate(
-                            `/dashboard/orders?table=${res.tableNumber}`
-                          )
-                        }
+  navigate(
+    `/dashboard/orders/create?table=${res.tableNumber}`
+  )
+}
                         className='w-full py-4 rounded-xl bg-[var(--primary)] text-black text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-glow'
                       >
                         Start Order
