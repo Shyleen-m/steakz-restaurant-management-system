@@ -41,7 +41,7 @@ export const isGlobalRole = (role?: Role): boolean => {
  * Prevents branch-restricted roles from accessing data from other branches.
  */
 export const enforceBranchIsolation = (
-  req: AuthRequest,
+  req: any,
   res: Response,
   next: NextFunction
 ): void => {

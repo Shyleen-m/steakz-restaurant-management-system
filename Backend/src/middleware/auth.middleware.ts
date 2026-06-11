@@ -3,7 +3,12 @@ import jwt from "jsonwebtoken";
 
 import { prisma } from "../config/prisma.js";
 
-export interface AuthRequest extends Request {
+export interface AuthRequest extends Request<
+  any,
+  any,
+  any,
+  any
+> {
   user?: any;
 }
 
@@ -37,11 +42,11 @@ export const protect = async (
      * TOKEN FROM COOKIE
      */
     if (
-      !token &&
-      req.cookies?.token
-    ) {
-      token = req.cookies.token;
-    }
+  !token &&
+  (req as any).cookies?.token
+) {
+  token = (req as any).cookies.token;
+}
 
     /**
      * NO TOKEN
@@ -126,11 +131,11 @@ export const optionalAuth = async (
     }
 
     if (
-      !token &&
-      req.cookies?.token
-    ) {
-      token = req.cookies.token;
-    }
+  !token &&
+  (req as any).cookies?.token
+) {
+  token = (req as any).cookies.token;
+}
 
     if (!token) {
       return next();
