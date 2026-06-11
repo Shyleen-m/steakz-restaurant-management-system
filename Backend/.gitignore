@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.env.local
+coverage
+npm-debug.log
+package-lock (2).json
+.vscode
+.DS_Store
