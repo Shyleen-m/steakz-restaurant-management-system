@@ -66,14 +66,16 @@ const SettingsPage = () => {
         </div>
 
         <div className='bg-[#0B0B0B] border border-white/5 p-1 rounded-2xl flex items-center shadow-2xl overflow-hidden'>
-           <div className="px-6 py-4 bg-white/5 border-r border-white/5">
+            <div className="px-6 py-4 bg-white/5 border-r border-white/5">
               <p className="text-[9px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Active Authority</p>
-              <p className="text-xs font-black text-[var(--primary)] uppercase tracking-tighter">{role?.replaceAll('_', ' ')}</p>
-           </div>
-           <div className="px-6 py-4">
+              <p className="text-xs font-black text-[var(--primary)] uppercase tracking-tighter">
+  {role?.split('_').join(' ')}
+</p>
+            </div>
+            <div className="px-6 py-4">
               <p className="text-[9px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Node Status</p>
               <p className="text-xs font-black text-emerald-500 uppercase tracking-tighter">Synchronized</p>
-           </div>
+            </div>
         </div>
       </div>
 
