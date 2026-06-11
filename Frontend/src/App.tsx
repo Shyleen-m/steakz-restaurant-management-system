@@ -74,17 +74,8 @@ function App() {
         />
 
         <Route
-  path='/menu/:branchId'
-  element={
-    <ProtectedRoute
-      allowedRoles={[
-        'CUSTOMER',
-        'WAITER'
-      ]}
-    >
-      <MenuPage />
-    </ProtectedRoute>
-  }
+  path="/menu/:branchId"
+  element={<MenuPage />}
 />
 
         <Route
@@ -135,13 +126,9 @@ function App() {
         />
 
         <Route
-          path='/cart'
-          element={
-            <ProtectedRoute allowedRoles={['CUSTOMER']}>
-              <CartPage />
-            </ProtectedRoute>
-          }
-        />
+  path="/cart"
+  element={<CartPage />}
+/>
 
         {/* ========================================= */}
         {/* CREATE ORDER                              */}

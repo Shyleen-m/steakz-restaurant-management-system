@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import {
   ShoppingBag,
@@ -38,8 +39,18 @@ interface ReceiptData {
 }
 
 const CartPage = () => {
-  const navigate = useNavigate();
-  const { cart, total, increaseQuantity, decreaseQuantity, removeFromCart, clearCart } = useCart();
+const navigate = useNavigate();
+
+const { user } = useAuth();
+
+const {
+  cart,
+  total,
+  increaseQuantity,
+  decreaseQuantity,
+  removeFromCart,
+  clearCart
+} = useCart();
 
   const [tableNumber, setTableNumber] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState<'CARD' | 'CASH' | 'ONLINE'>('CARD');
@@ -118,9 +129,16 @@ const CartPage = () => {
   }, []);
 
   const checkout = async () => {
-    if (!cart.length) return;
 
-    try {
+  // Require login only at checkout
+  if (!user) {
+    navigate("/login");
+    return;
+  }
+
+  if (!cart.length) return;
+
+  try {
       setLoading(true);
 
       // Step 1: Create order
