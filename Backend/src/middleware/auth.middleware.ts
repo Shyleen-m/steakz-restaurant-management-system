@@ -3,14 +3,9 @@ import jwt from "jsonwebtoken";
 
 import { prisma } from "../config/prisma.js";
 
-export interface AuthRequest extends Request<
-  any,
-  any,
-  any,
-  any
-> {
+export type AuthRequest = Request & {
   user?: any;
-}
+};
 
 /**
  * 🔐 PROTECT MIDDLEWARE
